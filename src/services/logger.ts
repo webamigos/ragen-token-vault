@@ -1,5 +1,5 @@
 import pino from "pino";
-import pretty from "pino-pretty";
+import type { DestinationStream } from "pino";
 import { otelLogger } from "./otel-logger.js";
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -47,7 +47,11 @@ const logger = pino(
       },
     },
   },
-  isProduction ? undefined : pretty({ colorize: true }),
+  isProduction
+    ? undefined
+    : await import("pino-pretty").then((m) =>
+        m.default({ colorize: true }) as DestinationStream
+      ),
 );
 
 export { logger };
