@@ -32,7 +32,7 @@ COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/src/generated ./dist/generated
 
 RUN npx prisma generate
-RUN chown -R fastify:nodejs node_modules/.prisma node_modules/@prisma
+RUN chown -R fastify:nodejs node_modules/@prisma
 
 USER fastify
 
