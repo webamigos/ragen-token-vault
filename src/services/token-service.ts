@@ -110,21 +110,13 @@ export async function deleteToken(
 ): Promise<boolean> {
   const db = getDb();
 
-  const existing = await db.token.findUnique({
-    where: {
-      customer_id_provider: { customer_id: customerId, provider },
-    },
+  const result = await db.token.deleteMany({
+    where: { customer_id: customerId, provider },
   });
 
-  if (!existing) {
+  if (result.count === 0) {
     return false;
   }
-
-  await db.token.delete({
-    where: {
-      customer_id_provider: { customer_id: customerId, provider },
-    },
-  });
 
   await logAudit({
     customer_id: customerId,

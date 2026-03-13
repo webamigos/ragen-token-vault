@@ -47,7 +47,7 @@ const logger = pino(
       },
     },
   },
-  pretty({ colorize: true }),
+  isProduction ? undefined : pretty({ colorize: true }),
 );
 
 export { logger };

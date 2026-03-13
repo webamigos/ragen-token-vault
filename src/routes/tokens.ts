@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
+import { z } from "zod";
 import {
   storeToken,
   retrieveToken,
@@ -6,41 +7,66 @@ import {
   getTokenStatus,
   listCustomerTokens,
 } from "../services/token-service.js";
-import type { StoreTokenInput } from "../types/index.js";
 
-interface TokenParams {
-  customerId: string;
-  provider: string;
-}
+const tokenParamsSchema = z.object({
+  customerId: z.string().min(1).max(255),
+  provider: z.string().min(1).max(64).regex(/^[a-zA-Z0-9_-]+$/),
+});
 
-interface CustomerParams {
-  customerId: string;
+const customerParamsSchema = z.object({
+  customerId: z.string().min(1).max(255),
+});
+
+const storeTokenBodySchema = z.object({
+  access_token: z.string().min(1),
+  refresh_token: z.string().optional(),
+  client_id: z.string().optional(),
+  client_secret: z.string().optional(),
+  code_verifier: z.string().optional(),
+  token_type: z.string().optional(),
+  expires_at: z.string().optional(),
+  scopes: z.string().optional(),
+  token_uri: z.string().optional(),
+});
+
+function getCallerService(request: FastifyRequest): string {
+  return (request as FastifyRequest & { serviceName?: string }).serviceName ?? "unknown";
 }
 
 export async function tokenRoutes(app: FastifyInstance): Promise<void> {
   // PUT /v1/tokens/:customerId/:provider — Store/update token
-  app.put<{ Params: TokenParams; Body: StoreTokenInput }>(
+  app.put<{ Params: { customerId: string; provider: string }; Body: z.infer<typeof storeTokenBodySchema> }>(
     "/v1/tokens/:customerId/:provider",
     async (request, reply) => {
-      const { customerId, provider } = request.params;
-      const callerService =
-        (request as FastifyRequest & { serviceName?: string }).serviceName ??
-        "unknown";
+      const params = tokenParamsSchema.safeParse(request.params);
+      if (!params.success) {
+        return reply.code(400).send({ error: "Invalid path parameters", details: params.error.format() });
+      }
+      const body = storeTokenBodySchema.safeParse(request.body);
+      if (!body.success) {
+        return reply.code(400).send({ error: "Invalid request body", details: body.error.format() });
+      }
 
-      await storeToken(customerId, provider, request.body, callerService);
+      const { customerId, provider } = params.data;
+      const callerService = getCallerService(request);
+
+      await storeToken(customerId, provider, body.data, callerService);
 
       return reply.code(200).send({ ok: true });
     },
   );
 
   // GET /v1/tokens/:customerId/:provider — Retrieve decrypted token
-  app.get<{ Params: TokenParams }>(
+  app.get<{ Params: { customerId: string; provider: string } }>(
     "/v1/tokens/:customerId/:provider",
     async (request, reply) => {
-      const { customerId, provider } = request.params;
-      const callerService =
-        (request as FastifyRequest & { serviceName?: string }).serviceName ??
-        "unknown";
+      const params = tokenParamsSchema.safeParse(request.params);
+      if (!params.success) {
+        return reply.code(400).send({ error: "Invalid path parameters" });
+      }
+
+      const { customerId, provider } = params.data;
+      const callerService = getCallerService(request);
 
       const token = await retrieveToken(customerId, provider, callerService);
 
@@ -53,13 +79,16 @@ export async function tokenRoutes(app: FastifyInstance): Promise<void> {
   );
 
   // DELETE /v1/tokens/:customerId/:provider — Delete token
-  app.delete<{ Params: TokenParams }>(
+  app.delete<{ Params: { customerId: string; provider: string } }>(
     "/v1/tokens/:customerId/:provider",
     async (request, reply) => {
-      const { customerId, provider } = request.params;
-      const callerService =
-        (request as FastifyRequest & { serviceName?: string }).serviceName ??
-        "unknown";
+      const params = tokenParamsSchema.safeParse(request.params);
+      if (!params.success) {
+        return reply.code(400).send({ error: "Invalid path parameters" });
+      }
+
+      const { customerId, provider } = params.data;
+      const callerService = getCallerService(request);
 
       const deleted = await deleteToken(customerId, provider, callerService);
 
@@ -72,10 +101,15 @@ export async function tokenRoutes(app: FastifyInstance): Promise<void> {
   );
 
   // GET /v1/tokens/:customerId/:provider/status — Check auth status
-  app.get<{ Params: TokenParams }>(
+  app.get<{ Params: { customerId: string; provider: string } }>(
     "/v1/tokens/:customerId/:provider/status",
     async (request, reply) => {
-      const { customerId, provider } = request.params;
+      const params = tokenParamsSchema.safeParse(request.params);
+      if (!params.success) {
+        return reply.code(400).send({ error: "Invalid path parameters" });
+      }
+
+      const { customerId, provider } = params.data;
 
       const status = await getTokenStatus(customerId, provider);
 
@@ -88,12 +122,15 @@ export async function tokenRoutes(app: FastifyInstance): Promise<void> {
   );
 
   // GET /v1/tokens/:customerId — List all providers for customer
-  app.get<{ Params: CustomerParams }>(
+  app.get<{ Params: { customerId: string } }>(
     "/v1/tokens/:customerId",
     async (request, reply) => {
-      const { customerId } = request.params;
+      const params = customerParamsSchema.safeParse(request.params);
+      if (!params.success) {
+        return reply.code(400).send({ error: "Invalid path parameters" });
+      }
 
-      const tokens = await listCustomerTokens(customerId);
+      const tokens = await listCustomerTokens(params.data.customerId);
 
       return reply.code(200).send({ tokens });
     },

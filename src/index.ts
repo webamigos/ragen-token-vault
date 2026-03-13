@@ -1,5 +1,5 @@
 // Must be imported first to set up OTEL before any other imports
-import "./instrument.js";
+import { shutdownOtel } from "./instrument.js";
 
 import { buildServer } from "./server.js";
 import { getConfig } from "./config.js";
@@ -14,6 +14,7 @@ async function main() {
     logger.info("Shutting down...");
     await server.close();
     await disconnectDb();
+    await shutdownOtel();
     process.exit(0);
   };
 

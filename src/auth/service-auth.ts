@@ -79,7 +79,7 @@ export async function serviceAuthHook(
   const rawBody =
     request.method === "GET" || request.method === "DELETE"
       ? ""
-      : JSON.stringify(request.body ?? "");
+      : (request.rawBody ?? "");
 
   const expectedSig = computeSignature(
     config.RAGEN_AUTH_SERVICE_SECRET,

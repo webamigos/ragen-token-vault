@@ -78,18 +78,14 @@ function init() {
     instrumentations: [new HttpInstrumentation(), new PgInstrumentation()],
   });
 
-  const shutdown = async () => {
-    await Promise.allSettled([
-      tracerProvider?.shutdown(),
-      meterProvider?.shutdown(),
-      loggerProvider?.shutdown(),
-    ]).finally(() => {
-      process.exit(0);
-    });
-  };
-
-  process.on("SIGTERM", shutdown);
-  process.on("SIGINT", shutdown);
 }
 
 init();
+
+export async function shutdownOtel(): Promise<void> {
+  await Promise.allSettled([
+    tracerProvider?.shutdown(),
+    meterProvider?.shutdown(),
+    loggerProvider?.shutdown(),
+  ]);
+}

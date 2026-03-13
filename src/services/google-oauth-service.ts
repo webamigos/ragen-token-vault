@@ -4,6 +4,9 @@ import { encrypt, decrypt } from "../crypto/encryption.js";
 import { getConfig } from "../config.js";
 import { storeToken } from "./token-service.js";
 import { logAudit } from "./audit-service.js";
+import { logger } from "./logger.js";
+
+const FETCH_TIMEOUT_MS = 15_000;
 
 const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
@@ -24,6 +27,11 @@ export async function generateAuthUrl(
 ): Promise<string> {
   const config = getConfig();
   const db = getDb();
+
+  // Clean up expired pending states
+  await db.oAuthPendingState.deleteMany({
+    where: { expires_at: { lt: new Date() } },
+  });
 
   const state = crypto.randomBytes(32).toString("hex");
   const codeVerifier = crypto.randomBytes(32).toString("base64url");
@@ -110,11 +118,13 @@ export async function handleCallback(
       grant_type: "authorization_code",
       ...(codeVerifier ? { code_verifier: codeVerifier } : {}),
     }),
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
 
   if (!tokenResponse.ok) {
     const errorBody = await tokenResponse.text();
-    throw new Error(`Google token exchange failed: ${errorBody}`);
+    logger.error({ status: tokenResponse.status, errorBody }, "Google token exchange failed");
+    throw new Error(`Google token exchange failed (status ${tokenResponse.status})`);
   }
 
   const tokens = (await tokenResponse.json()) as {
@@ -197,11 +207,13 @@ export async function refreshAccessToken(
       refresh_token: refreshToken,
       grant_type: "refresh_token",
     }),
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
 
   if (!tokenResponse.ok) {
     const errorBody = await tokenResponse.text();
-    throw new Error(`Google token refresh failed: ${errorBody}`);
+    logger.error({ status: tokenResponse.status, errorBody }, "Google token refresh failed");
+    throw new Error(`Google token refresh failed (status ${tokenResponse.status})`);
   }
 
   const tokens = (await tokenResponse.json()) as {
