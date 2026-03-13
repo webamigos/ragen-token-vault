@@ -7,7 +7,7 @@
     "node": ">=22.0.0"
   },
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "tsx watch --env-file=.env.local src/index.ts",
     "build": "prisma generate && tsc",
     "start": "node dist/index.js",
     "generate:types": "prisma generate",

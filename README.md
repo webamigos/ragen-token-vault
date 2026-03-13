@@ -25,7 +25,7 @@ npm install
 npx prisma generate
 
 # Run migrations
-cp .env.example .env
+cp .env.example .env.local
 npx prisma migrate dev
 
 # Start dev server
@@ -51,10 +51,11 @@ The server runs on `http://localhost:3100` by default.
 | `TARGET_ENV` | No | Deployment environment name (default: `local`) |
 | `GIT_COMMIT_SHA` | No | Git commit SHA for service version |
 
-Generate secrets with:
+Generate `ENCRYPTION_KEY` and `RAGEN_AUTH_SERVICE_SECRET`:
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
+Run it twice — once for each variable.
 
 ## API Endpoints
 
