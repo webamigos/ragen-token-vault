@@ -39,8 +39,11 @@ Local Postgres: `docker compose up -d`, then `cp .env.example .env` and `npx pri
 - **Auth** (`src/auth/service-auth.ts`): HMAC-SHA256 service-to-service auth. Signature format: `HMAC(secret, "{ts}\n{method}\n{path}\n{body_sha256}")`. Caller identified via `X-Service-Name` header.
 - **Crypto** (`src/crypto/encryption.ts`): AES-256-GCM encrypt/decrypt. Storage format: `{iv_hex}:{ciphertext_b64}:{auth_tag_hex}`.
 - **Token Service** (`src/services/token-service.ts`): CRUD for encrypted tokens. Encrypts sensitive fields before DB write, decrypts on read.
+- **Google OAuth Service** (`src/services/google-oauth-service.ts`): Google OAuth flow — generates auth URLs, handles callbacks, refreshes access tokens.
+- **Audit Service** (`src/services/audit-service.ts`): Writes audit log entries for token operations.
 - **DB** (`src/db/client.ts`): Prisma 7 with `@prisma/adapter-pg` (raw pg driver). Generated client lives in `src/generated/prisma/` (gitignored).
 - **Config** (`src/config.ts`): Zod-validated env vars, singleton pattern.
+- **Env Validation** (`src/validateEnvVars.ts`): Zod schema for required environment variables.
 
 ### Database
 
