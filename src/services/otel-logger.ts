@@ -1,6 +1,6 @@
 import { logs, SeverityNumber } from "@opentelemetry/api-logs";
 
-const logger = logs.getLogger("ragen-auth");
+const logger = logs.getLogger("ragen-vault");
 
 function extractErrorAttrs(
   attrs?: Record<string, unknown>,

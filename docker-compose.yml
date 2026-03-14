@@ -4,11 +4,11 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: pass123
-      POSTGRES_DB: ragen-auth
+      POSTGRES_DB: ragen-vault
     ports:
       - "5433:5432"
     volumes:
-      - ragen_auth_pgdata:/var/lib/postgresql/data
+      - ragen_vault_pgdata:/var/lib/postgresql/data
 
 volumes:
-  ragen_auth_pgdata:
+  ragen_vault_pgdata:
