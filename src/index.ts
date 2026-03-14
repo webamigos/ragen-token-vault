@@ -5,6 +5,16 @@ import { buildServer } from "./server.js";
 import { getConfig } from "./config.js";
 import { disconnectDb } from "./db/client.js";
 import { logger } from "./services/logger.js";
+import { validateEnvVars } from "./validateEnvVars.js";
+
+const validateEnvVarsResult = validateEnvVars();
+if (!validateEnvVarsResult.success) {
+  console.error(
+    "Invalid environment variables:",
+    validateEnvVarsResult.error.format()
+  );
+  process.exit(1);
+}
 
 async function main() {
   const config = getConfig();
