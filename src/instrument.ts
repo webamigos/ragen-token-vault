@@ -23,7 +23,7 @@ import { registerInstrumentations } from "@opentelemetry/instrumentation";
 const endpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT;
 
 const resource = resourceFromAttributes({
-  "service.name": "ragen-auth",
+  "service.name": "ragen-vault",
   "service.version": process.env.GIT_COMMIT_SHA ?? "dev",
   "deployment.environment.name": process.env.TARGET_ENV ?? "local",
 });

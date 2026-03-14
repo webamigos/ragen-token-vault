@@ -6,7 +6,7 @@ const envSchema = z.object({
     .string()
     .length(64)
     .regex(/^[0-9a-f]+$/i, "Must be a 64-char hex string"),
-  RAGEN_AUTH_SERVICE_SECRET: z.string().min(32),
+  RAGEN_VAULT_SERVICE_SECRET: z.string().min(32),
   GOOGLE_CLIENT_ID: z.string().optional().default(""),
   GOOGLE_CLIENT_SECRET: z.string().optional().default(""),
   GOOGLE_REDIRECT_URI: z

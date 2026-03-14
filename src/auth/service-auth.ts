@@ -82,7 +82,7 @@ export async function serviceAuthHook(
       : (request.rawBody ?? "");
 
   const expectedSig = computeSignature(
-    config.RAGEN_AUTH_SERVICE_SECRET,
+    config.RAGEN_VAULT_SERVICE_SECRET,
     parsed.ts,
     request.method,
     request.url.split("?")[0]!,

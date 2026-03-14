@@ -1,4 +1,4 @@
-# ragen-auth
+# ragen-vault
 
 Centralized Token Vault Service for the ragen ecosystem. Stores all customer OAuth tokens and API keys with AES-256-GCM encryption, so other services (ragen-app, ragen-mcp) become stateless regarding secrets.
 
@@ -40,7 +40,7 @@ The server runs on `http://localhost:3100` by default.
 |----------|----------|-------------|
 | `DATABASE_URL` | Yes | PostgreSQL connection string |
 | `ENCRYPTION_KEY` | Yes | 64-char hex string (32 bytes for AES-256) |
-| `RAGEN_AUTH_SERVICE_SECRET` | Yes | Shared secret for HMAC service auth (min 32 chars) |
+| `RAGEN_VAULT_SERVICE_SECRET` | Yes | Shared secret for HMAC service auth (min 32 chars) |
 | `GOOGLE_CLIENT_ID` | No | Google OAuth client ID |
 | `GOOGLE_CLIENT_SECRET` | No | Google OAuth client secret |
 | `GOOGLE_REDIRECT_URI` | No | Google OAuth callback URL (default: `http://localhost:3100/v1/oauth/google/callback`) |
@@ -51,11 +51,69 @@ The server runs on `http://localhost:3100` by default.
 | `TARGET_ENV` | No | Deployment environment name (default: `local`) |
 | `GIT_COMMIT_SHA` | No | Git commit SHA for service version |
 
-Generate `ENCRYPTION_KEY` and `RAGEN_AUTH_SERVICE_SECRET`:
+Generate `ENCRYPTION_KEY` and `RAGEN_VAULT_SERVICE_SECRET`:
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 Run it twice — once for each variable.
+
+## Architecture
+
+ragen-vault is the central token vault for the ragen ecosystem. All services store and retrieve tokens through it.
+
+```mermaid
+flowchart TB
+    subgraph Clients
+        APP[ragen-app<br/>Next.js]
+        MCP[ragen-mcp<br/>Python/FastAPI]
+    end
+
+    subgraph ragen-vault
+        API[Fastify API<br/>HMAC-SHA256 auth]
+        ENC[AES-256-GCM<br/>encryption]
+        DB[(PostgreSQL<br/>tokens table)]
+        AUDIT[(audit_logs)]
+    end
+
+    subgraph External
+        GOOGLE[Google OAuth]
+        CLICKUP[ClickUp MCP]
+        HUBSPOT[HubSpot MCP]
+        FIREFLIES[Fireflies MCP]
+    end
+
+    APP -->|HMAC signed| API
+    MCP -->|HMAC signed| API
+    API --> ENC
+    ENC --> DB
+    API --> AUDIT
+    API -->|OAuth PKCE| GOOGLE
+
+    APP -.->|tokens from ragen-vault| CLICKUP
+    APP -.->|tokens from ragen-vault| HUBSPOT
+    APP -.->|tokens from ragen-vault| FIREFLIES
+    MCP -.->|tokens from ragen-vault| GOOGLE
+```
+
+### Google OAuth Flow (PKCE)
+
+```mermaid
+sequenceDiagram
+    participant Browser
+    participant Caller as ragen-app / ragen-mcp
+    participant Auth as ragen-vault
+    participant Google
+
+    Caller->>Auth: GET /v1/oauth/google/authorize<br/>(HMAC signed, customer_id, scopes)
+    Auth->>Auth: Generate PKCE (code_verifier + challenge)<br/>Store in oauth_pending_states
+    Auth->>Browser: 302 Redirect to Google
+    Browser->>Google: User authorizes
+    Google->>Auth: GET /v1/oauth/google/callback<br/>(code + state)
+    Auth->>Google: Exchange code + code_verifier for tokens
+    Google-->>Auth: access_token + refresh_token
+    Auth->>Auth: Encrypt tokens (AES-256-GCM)<br/>Store in tokens table
+    Auth->>Browser: 302 Redirect to caller's redirect_uri
+```
 
 ## API Endpoints
 
