@@ -57,6 +57,64 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 Run it twice — once for each variable.
 
+## Architecture
+
+ragen-auth is the central token vault for the ragen ecosystem. All services store and retrieve tokens through it.
+
+```mermaid
+flowchart TB
+    subgraph Clients
+        APP[ragen-app<br/>Next.js]
+        MCP[ragen-mcp<br/>Python/FastAPI]
+    end
+
+    subgraph ragen-auth
+        API[Fastify API<br/>HMAC-SHA256 auth]
+        ENC[AES-256-GCM<br/>encryption]
+        DB[(PostgreSQL<br/>tokens table)]
+        AUDIT[(audit_logs)]
+    end
+
+    subgraph External
+        GOOGLE[Google OAuth]
+        CLICKUP[ClickUp MCP]
+        HUBSPOT[HubSpot MCP]
+        FIREFLIES[Fireflies MCP]
+    end
+
+    APP -->|HMAC signed| API
+    MCP -->|HMAC signed| API
+    API --> ENC
+    ENC --> DB
+    API --> AUDIT
+    API -->|OAuth PKCE| GOOGLE
+
+    APP -.->|tokens from ragen-auth| CLICKUP
+    APP -.->|tokens from ragen-auth| HUBSPOT
+    APP -.->|tokens from ragen-auth| FIREFLIES
+    MCP -.->|tokens from ragen-auth| GOOGLE
+```
+
+### Google OAuth Flow (PKCE)
+
+```mermaid
+sequenceDiagram
+    participant Browser
+    participant Caller as ragen-app / ragen-mcp
+    participant Auth as ragen-auth
+    participant Google
+
+    Caller->>Auth: GET /v1/oauth/google/authorize<br/>(HMAC signed, customer_id, scopes)
+    Auth->>Auth: Generate PKCE (code_verifier + challenge)<br/>Store in oauth_pending_states
+    Auth->>Browser: 302 Redirect to Google
+    Browser->>Google: User authorizes
+    Google->>Auth: GET /v1/oauth/google/callback<br/>(code + state)
+    Auth->>Google: Exchange code + code_verifier for tokens
+    Google-->>Auth: access_token + refresh_token
+    Auth->>Auth: Encrypt tokens (AES-256-GCM)<br/>Store in tokens table
+    Auth->>Browser: 302 Redirect to caller's redirect_uri
+```
+
 ## API Endpoints
 
 All endpoints (except health and OAuth callback) require HMAC-SHA256 authentication via the `Authorization` header:
