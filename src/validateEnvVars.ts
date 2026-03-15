@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const envSchema = z.object({
+export const envSchema = z.object({
   DATABASE_URL: z.string().url(),
   ENCRYPTION_KEY: z
     .string()
@@ -20,6 +20,7 @@ const envSchema = z.object({
     .optional()
     .default("development"),
   OTEL_EXPORTER_OTLP_ENDPOINT: z.string().url().optional(),
+  OTEL_SERVICE_NAME: z.string().optional().default("ragen-token-vault"),
   TARGET_ENV: z.string().optional().default("local"),
   GIT_COMMIT_SHA: z.string().optional(),
 });
