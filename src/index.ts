@@ -33,7 +33,7 @@ async function main() {
 
   try {
     await server.listen({ port: config.PORT, host: config.HOST });
-    logger.info(`ragen-vault listening on ${config.HOST}:${config.PORT}`);
+    logger.info(`ragen-token-vault listening on ${config.HOST}:${config.PORT}`);
   } catch (err) {
     logger.error({ err }, "Failed to start server");
     process.exit(1);
