@@ -4,3 +4,7 @@ src/generated/
 .env
 .env.local
 *.log
+
+# Claude Code - personal files
+.claude/settings.local.json
+.claude/memory/
