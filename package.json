@@ -1,5 +1,5 @@
 {
-  "name": "@ragenai/ragen-vault",
+  "name": "@ragenai/ragen-token-vault",
   "version": "1.0.0",
   "license": "MIT",
   "type": "module",

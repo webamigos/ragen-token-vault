@@ -60,7 +60,7 @@ export async function generateAuthUrl(
     customer_id: params.customerId,
     provider,
     action: "oauth_started",
-    caller_service: "ragen-vault",
+    caller_service: "ragen-token-vault",
     metadata: { scopes: params.scopes },
   });
 
@@ -151,7 +151,7 @@ export async function handleCallback(
       scopes: tokens.scope ?? pending.scopes ?? undefined,
       token_uri: GOOGLE_TOKEN_URL,
     },
-    "ragen-vault",
+    "ragen-token-vault",
   );
 
   // Clean up pending state
@@ -161,7 +161,7 @@ export async function handleCallback(
     customer_id: pending.customer_id,
     provider: pending.provider,
     action: "oauth_completed",
-    caller_service: "ragen-vault",
+    caller_service: "ragen-token-vault",
   });
 
   return {
