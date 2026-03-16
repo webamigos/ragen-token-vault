@@ -8,54 +8,54 @@ datasource db {
 }
 
 model Token {
-  id             String    @id @default(uuid()) @db.Uuid
-  customer_id    String
-  provider       String
+  id            String    @id @default(uuid()) @db.Uuid
+  customerId    String    @map("customer_id")
+  provider      String
 
   // Encrypted (AES-256-GCM, stored as "iv_hex:ciphertext_b64:tag_hex")
-  access_token   String
-  refresh_token  String?
-  client_id      String?
-  client_secret  String?
-  code_verifier  String?
+  accessToken   String    @map("access_token")
+  refreshToken  String?   @map("refresh_token")
+  clientId      String?   @map("client_id")
+  clientSecret  String?   @map("client_secret")
+  codeVerifier  String?   @map("code_verifier")
 
   // Metadata (not encrypted)
-  token_type     String    @default("Bearer")
-  expires_at     DateTime? @db.Timestamptz
-  scopes         String?
-  token_uri      String?
+  tokenType     String    @default("Bearer") @map("token_type")
+  expiresAt     DateTime? @map("expires_at") @db.Timestamptz
+  scopes        String?
+  tokenUri      String?   @map("token_uri")
 
-  created_at     DateTime  @default(now()) @db.Timestamptz
-  updated_at     DateTime  @updatedAt @db.Timestamptz
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
-  @@unique([customer_id, provider])
-  @@index([customer_id])
+  @@unique([customerId, provider])
+  @@index([customerId])
   @@map("tokens")
 }
 
 model OAuthPendingState {
-  state         String   @id
-  customer_id   String
-  provider      String
-  redirect_uri  String?
-  code_verifier String?
-  scopes        String?
-  created_at    DateTime @default(now()) @db.Timestamptz
-  expires_at    DateTime @db.Timestamptz
+  state        String   @id
+  customerId   String   @map("customer_id")
+  provider     String
+  redirectUri  String?  @map("redirect_uri")
+  codeVerifier String?  @map("code_verifier")
+  scopes       String?
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  expiresAt    DateTime @map("expires_at") @db.Timestamptz
 
   @@map("oauth_pending_states")
 }
 
 model AuditLog {
-  id             String   @id @default(uuid()) @db.Uuid
-  customer_id    String
-  provider       String
-  action         String
-  caller_service String
-  metadata       Json?
-  created_at     DateTime @default(now()) @db.Timestamptz
+  id            String   @id @default(uuid()) @db.Uuid
+  customerId    String   @map("customer_id")
+  provider      String
+  action        String
+  callerService String   @map("caller_service")
+  metadata      Json?
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  @@index([customer_id])
-  @@index([created_at])
+  @@index([customerId])
+  @@index([createdAt])
   @@map("audit_logs")
 }

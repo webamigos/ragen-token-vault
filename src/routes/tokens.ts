@@ -50,7 +50,18 @@ export async function tokenRoutes(app: FastifyInstance): Promise<void> {
       const { customerId, provider } = params.data;
       const callerService = getCallerService(request);
 
-      await storeToken(customerId, provider, body.data, callerService);
+      // Map snake_case API body to camelCase StoreTokenInput
+      await storeToken(customerId, provider, {
+        accessToken: body.data.access_token,
+        refreshToken: body.data.refresh_token,
+        clientId: body.data.client_id,
+        clientSecret: body.data.client_secret,
+        codeVerifier: body.data.code_verifier,
+        tokenType: body.data.token_type,
+        expiresAt: body.data.expires_at,
+        scopes: body.data.scopes,
+        tokenUri: body.data.token_uri,
+      }, callerService);
 
       return reply.code(200).send({ ok: true });
     },
@@ -74,7 +85,18 @@ export async function tokenRoutes(app: FastifyInstance): Promise<void> {
         return reply.code(404).send({ error: "Token not found" });
       }
 
-      return reply.code(200).send(token);
+      // Map camelCase TokenData to snake_case API response
+      return reply.code(200).send({
+        access_token: token.accessToken,
+        refresh_token: token.refreshToken,
+        client_id: token.clientId,
+        client_secret: token.clientSecret,
+        code_verifier: token.codeVerifier,
+        token_type: token.tokenType,
+        expires_at: token.expiresAt,
+        scopes: token.scopes,
+        token_uri: token.tokenUri,
+      });
     },
   );
 
@@ -117,7 +139,16 @@ export async function tokenRoutes(app: FastifyInstance): Promise<void> {
         return reply.code(404).send({ error: "Token not found" });
       }
 
-      return reply.code(200).send(status);
+      // Map camelCase TokenMetadata to snake_case API response
+      return reply.code(200).send({
+        provider: status.provider,
+        token_type: status.tokenType,
+        expires_at: status.expiresAt,
+        scopes: status.scopes,
+        is_expired: status.isExpired,
+        created_at: status.createdAt,
+        updated_at: status.updatedAt,
+      });
     },
   );
 
@@ -132,7 +163,18 @@ export async function tokenRoutes(app: FastifyInstance): Promise<void> {
 
       const tokens = await listCustomerTokens(params.data.customerId);
 
-      return reply.code(200).send({ tokens });
+      // Map camelCase TokenMetadata[] to snake_case API response
+      return reply.code(200).send({
+        tokens: tokens.map((t) => ({
+          provider: t.provider,
+          token_type: t.tokenType,
+          expires_at: t.expiresAt,
+          scopes: t.scopes,
+          is_expired: t.isExpired,
+          created_at: t.createdAt,
+          updated_at: t.updatedAt,
+        })),
+      });
     },
   );
 }

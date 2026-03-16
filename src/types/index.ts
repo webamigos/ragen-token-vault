@@ -1,41 +1,41 @@
 export interface TokenData {
-  access_token: string;
-  refresh_token?: string | null;
-  client_id?: string | null;
-  client_secret?: string | null;
-  code_verifier?: string | null;
-  token_type?: string;
-  expires_at?: Date | null;
+  accessToken: string;
+  refreshToken?: string | null;
+  clientId?: string | null;
+  clientSecret?: string | null;
+  codeVerifier?: string | null;
+  tokenType?: string;
+  expiresAt?: Date | null;
   scopes?: string | null;
-  token_uri?: string | null;
+  tokenUri?: string | null;
 }
 
 export interface TokenMetadata {
   provider: string;
-  token_type: string;
-  expires_at: Date | null;
+  tokenType: string;
+  expiresAt: Date | null;
   scopes: string | null;
-  is_expired: boolean;
-  created_at: Date;
-  updated_at: Date;
+  isExpired: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface StoreTokenInput {
-  access_token: string;
-  refresh_token?: string;
-  client_id?: string;
-  client_secret?: string;
-  code_verifier?: string;
-  token_type?: string;
-  expires_at?: string;
+  accessToken: string;
+  refreshToken?: string;
+  clientId?: string;
+  clientSecret?: string;
+  codeVerifier?: string;
+  tokenType?: string;
+  expiresAt?: string;
   scopes?: string;
-  token_uri?: string;
+  tokenUri?: string;
 }
 
 export interface GoogleOAuthStartInput {
-  customer_id: string;
+  customerId: string;
   scopes: string[];
-  redirect_uri?: string;
+  redirectUri?: string;
 }
 
 export interface ServiceAuthPayload {
