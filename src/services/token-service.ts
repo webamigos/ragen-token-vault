@@ -35,23 +35,23 @@ export async function storeToken(
   const db = getDb();
 
   const data = {
-    access_token: encryptField(input.access_token),
-    refresh_token: encryptOptional(input.refresh_token),
-    client_id: encryptOptional(input.client_id),
-    client_secret: encryptOptional(input.client_secret),
-    code_verifier: encryptOptional(input.code_verifier),
-    token_type: input.token_type ?? "Bearer",
-    expires_at: input.expires_at ? new Date(input.expires_at) : null,
+    accessToken: encryptField(input.accessToken),
+    refreshToken: encryptOptional(input.refreshToken),
+    clientId: encryptOptional(input.clientId),
+    clientSecret: encryptOptional(input.clientSecret),
+    codeVerifier: encryptOptional(input.codeVerifier),
+    tokenType: input.tokenType ?? "Bearer",
+    expiresAt: input.expiresAt ? new Date(input.expiresAt) : null,
     scopes: input.scopes ?? null,
-    token_uri: input.token_uri ?? null,
+    tokenUri: input.tokenUri ?? null,
   };
 
   await db.token.upsert({
     where: {
-      customer_id_provider: { customer_id: customerId, provider },
+      customerId_provider: { customerId, provider },
     },
     create: {
-      customer_id: customerId,
+      customerId,
       provider,
       ...data,
     },
@@ -59,10 +59,10 @@ export async function storeToken(
   });
 
   await logAudit({
-    customer_id: customerId,
+    customerId,
     provider,
     action: "token_stored",
-    caller_service: callerService,
+    callerService,
   });
 }
 
@@ -75,7 +75,7 @@ export async function retrieveToken(
 
   const token = await db.token.findUnique({
     where: {
-      customer_id_provider: { customer_id: customerId, provider },
+      customerId_provider: { customerId, provider },
     },
   });
 
@@ -84,22 +84,22 @@ export async function retrieveToken(
   }
 
   await logAudit({
-    customer_id: customerId,
+    customerId,
     provider,
     action: "token_retrieved",
-    caller_service: callerService,
+    callerService,
   });
 
   return {
-    access_token: decryptField(token.access_token),
-    refresh_token: decryptOptional(token.refresh_token),
-    client_id: decryptOptional(token.client_id),
-    client_secret: decryptOptional(token.client_secret),
-    code_verifier: decryptOptional(token.code_verifier),
-    token_type: token.token_type,
-    expires_at: token.expires_at,
+    accessToken: decryptField(token.accessToken),
+    refreshToken: decryptOptional(token.refreshToken),
+    clientId: decryptOptional(token.clientId),
+    clientSecret: decryptOptional(token.clientSecret),
+    codeVerifier: decryptOptional(token.codeVerifier),
+    tokenType: token.tokenType,
+    expiresAt: token.expiresAt,
     scopes: token.scopes,
-    token_uri: token.token_uri,
+    tokenUri: token.tokenUri,
   };
 }
 
@@ -111,7 +111,7 @@ export async function deleteToken(
   const db = getDb();
 
   const result = await db.token.deleteMany({
-    where: { customer_id: customerId, provider },
+    where: { customerId, provider },
   });
 
   if (result.count === 0) {
@@ -119,10 +119,10 @@ export async function deleteToken(
   }
 
   await logAudit({
-    customer_id: customerId,
+    customerId,
     provider,
     action: "token_deleted",
-    caller_service: callerService,
+    callerService,
   });
 
   return true;
@@ -136,7 +136,7 @@ export async function getTokenStatus(
 
   const token = await db.token.findUnique({
     where: {
-      customer_id_provider: { customer_id: customerId, provider },
+      customerId_provider: { customerId, provider },
     },
   });
 
@@ -145,16 +145,16 @@ export async function getTokenStatus(
   }
 
   const now = new Date();
-  const isExpired = token.expires_at ? token.expires_at < now : false;
+  const isExpired = token.expiresAt ? token.expiresAt < now : false;
 
   return {
     provider: token.provider,
-    token_type: token.token_type,
-    expires_at: token.expires_at,
+    tokenType: token.tokenType,
+    expiresAt: token.expiresAt,
     scopes: token.scopes,
-    is_expired: isExpired,
-    created_at: token.created_at,
-    updated_at: token.updated_at,
+    isExpired,
+    createdAt: token.createdAt,
+    updatedAt: token.updatedAt,
   };
 }
 
@@ -164,7 +164,7 @@ export async function listCustomerTokens(
   const db = getDb();
 
   const tokens = await db.token.findMany({
-    where: { customer_id: customerId },
+    where: { customerId },
     orderBy: { provider: "asc" },
   });
 
@@ -172,11 +172,11 @@ export async function listCustomerTokens(
 
   return tokens.map((token) => ({
     provider: token.provider,
-    token_type: token.token_type,
-    expires_at: token.expires_at,
+    tokenType: token.tokenType,
+    expiresAt: token.expiresAt,
     scopes: token.scopes,
-    is_expired: token.expires_at ? token.expires_at < now : false,
-    created_at: token.created_at,
-    updated_at: token.updated_at,
+    isExpired: token.expiresAt ? token.expiresAt < now : false,
+    createdAt: token.createdAt,
+    updatedAt: token.updatedAt,
   }));
 }
