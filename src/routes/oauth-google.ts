@@ -113,7 +113,11 @@ export async function googleOAuthRoutes(app: FastifyInstance): Promise<void> {
           callerService,
         );
 
-        return reply.code(200).send(result);
+        // Map camelCase to snake_case API response
+        return reply.code(200).send({
+          access_token: result.accessToken,
+          expires_at: result.expiresAt,
+        });
       } catch (err) {
         const message =
           err instanceof Error ? err.message : "Token refresh failed";

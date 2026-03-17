@@ -30,7 +30,7 @@ export async function generateAuthUrl(
 
   // Clean up expired pending states
   await db.oAuthPendingState.deleteMany({
-    where: { expires_at: { lt: new Date() } },
+    where: { expiresAt: { lt: new Date() } },
   });
 
   const state = crypto.randomBytes(32).toString("hex");
@@ -47,20 +47,20 @@ export async function generateAuthUrl(
   await db.oAuthPendingState.create({
     data: {
       state,
-      customer_id: params.customerId,
+      customerId: params.customerId,
       provider,
-      redirect_uri: redirectUri,
-      code_verifier: encrypt(codeVerifier, config.ENCRYPTION_KEY),
+      redirectUri,
+      codeVerifier: encrypt(codeVerifier, config.ENCRYPTION_KEY),
       scopes: params.scopes.join(" "),
-      expires_at: new Date(Date.now() + STATE_EXPIRY_MS),
+      expiresAt: new Date(Date.now() + STATE_EXPIRY_MS),
     },
   });
 
   await logAudit({
-    customer_id: params.customerId,
+    customerId: params.customerId,
     provider,
     action: "oauth_started",
-    caller_service: "ragen-vault",
+    callerService: "ragen-token-vault",
     metadata: { scopes: params.scopes },
   });
 
@@ -97,13 +97,13 @@ export async function handleCallback(
     throw new Error("Invalid or expired OAuth state");
   }
 
-  if (pending.expires_at < new Date()) {
+  if (pending.expiresAt < new Date()) {
     await db.oAuthPendingState.delete({ where: { state } });
     throw new Error("OAuth state expired");
   }
 
-  const codeVerifier = pending.code_verifier
-    ? decrypt(pending.code_verifier, config.ENCRYPTION_KEY)
+  const pendingCodeVerifier = pending.codeVerifier
+    ? decrypt(pending.codeVerifier, config.ENCRYPTION_KEY)
     : undefined;
 
   // Exchange code for tokens
@@ -114,9 +114,9 @@ export async function handleCallback(
       code,
       client_id: config.GOOGLE_CLIENT_ID,
       client_secret: config.GOOGLE_CLIENT_SECRET,
-      redirect_uri: pending.redirect_uri ?? config.GOOGLE_REDIRECT_URI,
+      redirect_uri: pending.redirectUri ?? config.GOOGLE_REDIRECT_URI,
       grant_type: "authorization_code",
-      ...(codeVerifier ? { code_verifier: codeVerifier } : {}),
+      ...(pendingCodeVerifier ? { code_verifier: pendingCodeVerifier } : {}),
     }),
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
@@ -141,33 +141,33 @@ export async function handleCallback(
     : undefined;
 
   await storeToken(
-    pending.customer_id,
+    pending.customerId,
     pending.provider,
     {
-      access_token: tokens.access_token,
-      refresh_token: tokens.refresh_token,
-      token_type: tokens.token_type ?? "Bearer",
-      expires_at: expiresAt,
+      accessToken: tokens.access_token,
+      refreshToken: tokens.refresh_token,
+      tokenType: tokens.token_type ?? "Bearer",
+      expiresAt,
       scopes: tokens.scope ?? pending.scopes ?? undefined,
-      token_uri: GOOGLE_TOKEN_URL,
+      tokenUri: GOOGLE_TOKEN_URL,
     },
-    "ragen-vault",
+    "ragen-token-vault",
   );
 
   // Clean up pending state
   await db.oAuthPendingState.delete({ where: { state } });
 
   await logAudit({
-    customer_id: pending.customer_id,
+    customerId: pending.customerId,
     provider: pending.provider,
     action: "oauth_completed",
-    caller_service: "ragen-vault",
+    callerService: "ragen-token-vault",
   });
 
   return {
-    customerId: pending.customer_id,
+    customerId: pending.customerId,
     provider: pending.provider,
-    redirectUri: pending.redirect_uri ?? undefined,
+    redirectUri: pending.redirectUri ?? undefined,
   };
 }
 
@@ -178,13 +178,13 @@ export async function refreshAccessToken(
   customerId: string,
   provider: string,
   callerService: string,
-): Promise<{ access_token: string; expires_at: Date | null }> {
+): Promise<{ accessToken: string; expiresAt: Date | null }> {
   const config = getConfig();
   const db = getDb();
 
   const token = await db.token.findUnique({
     where: {
-      customer_id_provider: { customer_id: customerId, provider },
+      customerId_provider: { customerId, provider },
     },
   });
 
@@ -192,11 +192,11 @@ export async function refreshAccessToken(
     throw new Error("Token not found");
   }
 
-  if (!token.refresh_token) {
+  if (!token.refreshToken) {
     throw new Error("No refresh token available");
   }
 
-  const refreshToken = decrypt(token.refresh_token, config.ENCRYPTION_KEY);
+  const refreshToken = decrypt(token.refreshToken, config.ENCRYPTION_KEY);
 
   const tokenResponse = await fetch(GOOGLE_TOKEN_URL, {
     method: "POST",
@@ -228,20 +228,20 @@ export async function refreshAccessToken(
   // Update stored token
   await db.token.update({
     where: {
-      customer_id_provider: { customer_id: customerId, provider },
+      customerId_provider: { customerId, provider },
     },
     data: {
-      access_token: encrypt(tokens.access_token, config.ENCRYPTION_KEY),
-      expires_at: expiresAt,
+      accessToken: encrypt(tokens.access_token, config.ENCRYPTION_KEY),
+      expiresAt,
     },
   });
 
   await logAudit({
-    customer_id: customerId,
+    customerId,
     provider,
     action: "token_refreshed",
-    caller_service: callerService,
+    callerService,
   });
 
-  return { access_token: tokens.access_token, expires_at: expiresAt };
+  return { accessToken: tokens.access_token, expiresAt };
 }
