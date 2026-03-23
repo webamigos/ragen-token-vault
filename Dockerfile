@@ -38,4 +38,7 @@ USER fastify
 
 EXPOSE 3100
 
+# Prefer IPv6 DNS resolution for Railway internal networking (neutral on IPv4-only networks)
+ENV NODE_OPTIONS="--dns-result-order=ipv6first"
+
 CMD ["node", "dist/index.js"]
