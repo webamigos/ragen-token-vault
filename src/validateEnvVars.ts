@@ -14,7 +14,7 @@ export const envSchema = z.object({
     .optional()
     .default("http://localhost:3100/v1/oauth/google/callback"),
   PORT: z.coerce.number().optional().default(3100),
-  HOST: z.string().optional().default("0.0.0.0"),
+  HOST: z.string().optional().default("::"),
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .optional()
