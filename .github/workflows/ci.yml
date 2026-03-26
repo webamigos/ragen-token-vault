@@ -24,6 +24,7 @@ jobs:
 
   test:
     name: Test
+    needs: lint
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -53,12 +54,34 @@ jobs:
       - run: npm run test:coverage
       - name: Coverage report
         if: always() && github.event_name == 'pull_request'
-        uses: MishaKav/jest-coverage-comment@main
+        uses: MishaKav/jest-coverage-comment@v1.0.32
         with:
           coverage-summary-path: coverage/coverage-summary.json
+      - name: Upload coverage to GitHub Pages
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: coverage/
+
+  deploy-coverage:
+    name: Deploy Coverage
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 
   build:
     name: Build
+    needs: test
     runs-on: ubuntu-latest
     env:
       DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy

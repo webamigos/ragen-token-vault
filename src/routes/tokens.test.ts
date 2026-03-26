@@ -1,4 +1,3 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import crypto from "node:crypto";
 import Fastify from "fastify";
 import { tokenRoutes } from "./tokens.js";
@@ -178,6 +177,18 @@ describe("token routes", () => {
       const body = res.json();
       expect(body.provider).toBe("GOOGLE");
       expect(body.is_expired).toBe(false);
+    });
+
+    it("returns 404 when token not found", async () => {
+      mockDb.token.findUnique.mockResolvedValue(null);
+
+      const app = await buildTestApp();
+      const res = await app.inject({
+        method: "GET",
+        url: "/v1/tokens/cust1/GOOGLE/status",
+      });
+
+      expect(res.statusCode).toBe(404);
     });
   });
 

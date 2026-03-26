@@ -1,4 +1,3 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import { computeSignature } from "./service-auth.js";
 
 const TEST_SECRET = "s".repeat(64);
