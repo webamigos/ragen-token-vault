@@ -57,27 +57,14 @@ jobs:
         uses: MishaKav/jest-coverage-comment@v1.0.32
         with:
           coverage-summary-path: coverage/coverage-summary.json
-      - name: Upload coverage to GitHub Pages
-        if: github.ref == 'refs/heads/main'
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: coverage/
-
-  deploy-coverage:
-    name: Deploy Coverage
-    needs: test
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Coverage summary
+        if: always()
+        run: |
+          node -e "
+            const c = JSON.parse(require('fs').readFileSync('coverage/coverage-summary.json','utf8')).total;
+            console.log('## Coverage Summary');
+            for (const [k,v] of Object.entries(c)) console.log(k + ': ' + v.pct + '%');
+          " >> "$GITHUB_STEP_SUMMARY"
 
   build:
     name: Build
