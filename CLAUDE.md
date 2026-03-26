@@ -13,6 +13,7 @@ npm run dev              # Start dev server with hot reload (tsx watch, port 310
 npm run build            # prisma generate + tsc
 npm run test             # vitest in watch mode
 npm run test:run         # vitest single run
+npm run test:coverage    # vitest with v8 coverage report
 npx vitest run src/crypto/encryption.test.ts  # run a single test file
 npm run lint             # eslint src/
 npm run db:migrate:dev   # create/apply dev migrations
