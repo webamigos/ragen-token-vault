@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { envSchema, validateEnvVars } from "./validateEnvVars.js";
+import { envSchema } from "./validateEnvVars.js";
 
 describe("envSchema", () => {
   const validEnv = {

@@ -30,7 +30,6 @@ vi.mock("./logger.js", () => ({
 
 import { getDb } from "../db/client.js";
 import { generateAuthUrl, handleCallback, refreshAccessToken } from "./google-oauth-service.js";
-import { encrypt } from "../crypto/encryption.js";
 
 function createMockDb() {
   return {
