@@ -50,7 +50,12 @@ jobs:
       - run: npm ci
       - run: npx prisma generate
       - run: npx prisma migrate deploy
-      - run: npm run test:run
+      - run: npm run test:coverage
+      - name: Coverage report
+        if: always() && github.event_name == 'pull_request'
+        uses: MishaKav/jest-coverage-comment@main
+        with:
+          coverage-summary-path: coverage/coverage-summary.json
 
   build:
     name: Build
