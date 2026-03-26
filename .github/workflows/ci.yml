@@ -24,6 +24,7 @@ jobs:
 
   test:
     name: Test
+    needs: lint
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -53,12 +54,13 @@ jobs:
       - run: npm run test:coverage
       - name: Coverage report
         if: always() && github.event_name == 'pull_request'
-        uses: MishaKav/jest-coverage-comment@main
+        uses: MishaKav/jest-coverage-comment@v1.0.32
         with:
           coverage-summary-path: coverage/coverage-summary.json
 
   build:
     name: Build
+    needs: test
     runs-on: ubuntu-latest
     env:
       DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy

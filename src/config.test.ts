@@ -1,5 +1,3 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-
 // We need to test getConfig with controlled env vars.
 // Since getConfig is a singleton, we re-import fresh each test.
 
@@ -15,6 +13,10 @@ describe("getConfig", () => {
 
   beforeEach(() => {
     vi.resetModules();
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   it("returns config when env vars are valid", async () => {
