@@ -24,6 +24,7 @@ jobs:
 
   test:
     name: Test
+    needs: lint
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -50,10 +51,24 @@ jobs:
       - run: npm ci
       - run: npx prisma generate
       - run: npx prisma migrate deploy
-      - run: npm run test:run
+      - run: npm run test:coverage
+      - name: Coverage report
+        if: always() && github.event_name == 'pull_request'
+        uses: MishaKav/jest-coverage-comment@v1.0.32
+        with:
+          coverage-summary-path: coverage/coverage-summary.json
+      - name: Coverage summary
+        if: always()
+        run: |
+          node -e "
+            const c = JSON.parse(require('fs').readFileSync('coverage/coverage-summary.json','utf8')).total;
+            console.log('## Coverage Summary');
+            for (const [k,v] of Object.entries(c)) console.log(k + ': ' + v.pct + '%');
+          " >> "$GITHUB_STEP_SUMMARY"
 
   build:
     name: Build
+    needs: test
     runs-on: ubuntu-latest
     env:
       DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy

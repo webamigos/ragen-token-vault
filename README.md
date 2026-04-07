@@ -65,7 +65,7 @@ ragen-token-vault is the central token vault for the ragen ecosystem. All servic
 flowchart TB
     subgraph Clients
         APP[ragen-app<br/>Next.js]
-        MCP[ragen-mcp<br/>Python/FastAPI]
+        MCP[ragen-mcp<br/>TypeScript]
     end
 
     subgraph ragen-token-vault
@@ -180,6 +180,7 @@ npm run build          # Prisma generate + tsc
 npm run start          # Run production build
 npm run test           # Run tests (vitest watch)
 npm run test:run       # Run tests once
+npm run test:coverage  # Run tests with v8 coverage report
 npm run generate:types # Regenerate Prisma client
 npm run db:migrate     # Deploy migrations
 npm run db:migrate:dev # Create/apply dev migrations
