@@ -4,7 +4,7 @@
   "license": "MIT",
   "type": "module",
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=24"
   },
   "scripts": {
     "dev": "tsx watch --env-file=.env.local src/index.ts",

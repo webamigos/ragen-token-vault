@@ -6,7 +6,7 @@ services:
       POSTGRES_PASSWORD: pass123
       POSTGRES_DB: ragen-token-vault
     ports:
-      - "5433:5432"
+      - "${POSTGRES_PORT:-5435}:5432"
     volumes:
       - ragen_vault_pgdata:/var/lib/postgresql/data
 
