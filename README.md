@@ -1,6 +1,6 @@
 # ragen-token-vault
 
-Centralized Token Vault Service for the ragen ecosystem. Stores all customer OAuth tokens and API keys with AES-256-GCM encryption, so other services (ragen-app, ragen-mcp) become stateless regarding secrets.
+Centralized Token Vault Service for the ragen ecosystem. Stores all customer OAuth tokens and API keys with AES-256-GCM encryption, so other services (ragen-app, ragen-connectors) become stateless regarding secrets.
 
 ## Stack
 
@@ -65,7 +65,7 @@ ragen-token-vault is the central token vault for the ragen ecosystem. All servic
 flowchart TB
     subgraph Clients
         APP[ragen-app<br/>Next.js]
-        MCP[ragen-mcp<br/>TypeScript]
+        MCP[ragen-connectors<br/>TypeScript]
     end
 
     subgraph ragen-token-vault
@@ -100,7 +100,7 @@ flowchart TB
 ```mermaid
 sequenceDiagram
     participant Browser
-    participant Caller as ragen-app / ragen-mcp
+    participant Caller as ragen-app / ragen-connectors
     participant Auth as ragen-token-vault
     participant Google
 
