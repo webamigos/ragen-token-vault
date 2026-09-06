@@ -13,6 +13,8 @@
     "generate:types": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
+    "typecheck": "tsc --noEmit",
+    "verify": "npm run generate:types && npm run lint && npm run test:run && npm run build",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
