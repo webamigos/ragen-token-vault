@@ -185,3 +185,18 @@ npm run generate:types # Regenerate Prisma client
 npm run db:migrate     # Deploy migrations
 npm run db:migrate:dev # Create/apply dev migrations
 ```
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the branch model, the pre-PR checks,
+and the constraints that make this repo different from the others — the
+`instrument.ts` import order, the HMAC and ciphertext formats being cross-service
+contracts, and the rule that a decrypted value never reaches a log.
+
+Security vulnerabilities go to **security@webamigos.pl**, never a public issue —
+see [SECURITY.md](SECURITY.md).
+
+## License
+
+Licensed under the [Apache License 2.0](LICENSE). See [NOTICE](NOTICE) for
+attribution requirements.
