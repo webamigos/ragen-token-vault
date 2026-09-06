@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-Centralized Token Vault Service for the ragen ecosystem. Stores customer OAuth tokens and API keys with AES-256-GCM encryption. Other services (ragen-app, ragen-mcp) call this service and remain stateless regarding secrets.
+Centralized Token Vault Service for the ragen ecosystem. Stores customer OAuth tokens and API keys with AES-256-GCM encryption. Other services (ragen-app, ragen-connectors) call this service and remain stateless regarding secrets.
 
 ## Commands
 

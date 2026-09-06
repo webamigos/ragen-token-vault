@@ -1,0 +1,34 @@
+# CODEOWNERS — sensitive paths that need a named reviewer even when someone else
+# has already approved the PR.
+#
+# GOTCHA: GitHub applies the LAST matching pattern only. A later, broader rule
+# silently overrides an earlier, narrower one — so order matters, and the most
+# specific rules belong at the BOTTOM of this file, not the top.
+#
+# Note that this whole repo is security-sensitive; the rules below mark the
+# paths where a mistake is unrecoverable rather than merely bad.
+
+# Default: anything not matched below.
+*                                       @webamigos/ragen-ai
+
+# CI/CD, release and deployment infrastructure.
+/.github/workflows/                     @webamigos/ragen-ai
+/Dockerfile                             @webamigos/ragen-ai
+/docker-compose.yml                     @webamigos/ragen-ai
+/railway.toml                           @webamigos/ragen-ai
+
+# Database schema and migrations — a bad migration here can orphan encrypted
+# rows, which is not recoverable.
+/prisma/                                @webamigos/ragen-ai
+
+# Encryption and service authentication. A change to either format breaks
+# existing data or every calling service. Single owner on purpose.
+/src/crypto/                            @patrykomiotek
+/src/auth/                              @patrykomiotek
+
+# Licensing, security policy and this file itself — single owner on purpose.
+# Any owner listed on a line can approve alone, so these stay narrow.
+/LICENSE                                @patrykomiotek
+/NOTICE                                 @patrykomiotek
+/SECURITY.md                            @patrykomiotek
+/.github/CODEOWNERS                     @patrykomiotek

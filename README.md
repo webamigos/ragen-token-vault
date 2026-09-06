@@ -1,6 +1,6 @@
 # ragen-token-vault
 
-Centralized Token Vault Service for the ragen ecosystem. Stores all customer OAuth tokens and API keys with AES-256-GCM encryption, so other services (ragen-app, ragen-mcp) become stateless regarding secrets.
+Centralized Token Vault Service for the ragen ecosystem. Stores all customer OAuth tokens and API keys with AES-256-GCM encryption, so other services (ragen-app, ragen-connectors) become stateless regarding secrets.
 
 ## Stack
 
@@ -65,7 +65,7 @@ ragen-token-vault is the central token vault for the ragen ecosystem. All servic
 flowchart TB
     subgraph Clients
         APP[ragen-app<br/>Next.js]
-        MCP[ragen-mcp<br/>TypeScript]
+        MCP[ragen-connectors<br/>TypeScript]
     end
 
     subgraph ragen-token-vault
@@ -100,7 +100,7 @@ flowchart TB
 ```mermaid
 sequenceDiagram
     participant Browser
-    participant Caller as ragen-app / ragen-mcp
+    participant Caller as ragen-app / ragen-connectors
     participant Auth as ragen-token-vault
     participant Google
 
@@ -185,3 +185,18 @@ npm run generate:types # Regenerate Prisma client
 npm run db:migrate     # Deploy migrations
 npm run db:migrate:dev # Create/apply dev migrations
 ```
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the branch model, the pre-PR checks,
+and the constraints that make this repo different from the others — the
+`instrument.ts` import order, the HMAC and ciphertext formats being cross-service
+contracts, and the rule that a decrypted value never reaches a log.
+
+Security vulnerabilities go to **security@webamigos.pl**, never a public issue —
+see [SECURITY.md](SECURITY.md).
+
+## License
+
+Licensed under the [Apache License 2.0](LICENSE). See [NOTICE](NOTICE) for
+attribution requirements.

@@ -1,0 +1,51 @@
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 10
+    labels:
+      - dependencies
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      # One PR per ecosystem rather than a dozen. Security updates are excluded
+      # from grouping by Dependabot, so they still arrive as their own PR.
+      dev-dependencies:
+        dependency-type: development
+        update-types: [minor, patch]
+      production-minor-patch:
+        dependency-type: production
+        update-types: [minor, patch]
+    ignore:
+      # Majors for the framework core land deliberately, not on a schedule.
+      - dependency-name: fastify
+        update-types: [version-update:semver-major]
+      - dependency-name: zod
+        update-types: [version-update:semver-major]
+      - dependency-name: "@prisma/*"
+        update-types: [version-update:semver-major]
+      - dependency-name: prisma
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    labels:
+      - dependencies
+    commit-message:
+      prefix: ci
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: monthly
+    labels:
+      - dependencies
+    commit-message:
+      prefix: chore
