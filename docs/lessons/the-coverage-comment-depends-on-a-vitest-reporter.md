@@ -18,9 +18,11 @@ reporters. Nothing in `ci.yml` says so. Trimming the reporter list to
 `["text", "lcov"]` — an entirely reasonable-looking cleanup — leaves the CI
 steps reading a file that is not there: the comment action degrades quietly and
 the summary step throws inside a `node -e` one-liner whose stack trace mentions
-`coverage-summary.json` and nothing about vitest. Both steps also carry
-`if: always()`, so a failure there does not turn the job red in the way you would
-expect.
+`coverage-summary.json` and nothing about vitest. Both steps carry
+`if: always()`, which only means they still run after an earlier failure — it
+does **not** suppress their own. Neither sets `continue-on-error`, so the
+summary step turns the job red, while the comment action degrades quietly: the
+same missing file produces a loud failure in one step and silence in the other.
 
 **Rule**: when a CI step consumes a file, the config that produces it is part of
 the CI contract. Either state the dependency where it can be seen — a comment in

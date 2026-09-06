@@ -34,7 +34,11 @@ written to every audit row. It defaults to `"unknown"` when absent.
 
 ## Worked example
 
-Secret `dev-secret-at-least-32-characters-long`, timestamp `1767225600`:
+Secret `dev-secret-at-least-32-characters-long`, timestamp `1767225600`. These
+are **test vectors for checking a signing implementation**, not a request you
+can replay: `ts` is part of the HMAC input and is validated against a ±5-minute
+window, so a live caller generates a current timestamp and recomputes `sig` for
+every request.
 
 ```
 PUT /v1/tokens/cust_42/GOOGLE

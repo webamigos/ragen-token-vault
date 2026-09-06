@@ -57,8 +57,12 @@ These are not stylistic — each one is load-bearing:
   to drop.
 - **State**: 32 random bytes, single-use, deleted after exchange, 10-minute TTL
   checked on read.
-- **The callback stays public and stateless otherwise** — no new public route
-  and no relaxation of the existing one.
+- **`/v1/oauth/:provider/callback` is the only public route of the three.** A
+  browser arrives there from the provider and cannot hold the service secret, so
+  it is registered *outside* the `serviceAuthHook` scope in `buildServer()`.
+  `authorize` and `refresh` stay inside it, service-authenticated. Adding any
+  further public route is out of scope for a provider change — the only two that
+  exist are `/health` and this callback.
 - **Tokens are stored through `storeToken`**, never written to Prisma directly,
   so they are encrypted and audited on the way in.
 - **Provider secrets go through the zod env schema** and into `.env.example`,

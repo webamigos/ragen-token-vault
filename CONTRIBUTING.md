@@ -31,7 +31,7 @@ Node.js 24.x (see `.nvmrc`) and Docker.
 
 ```bash
 docker compose up -d       # local Postgres
-cp .env.example .env
+cp .env.example .env.local   # npm run dev reads .env.local, not .env
 npm install
 npm run generate:types     # generate the Prisma client — required before anything builds
 npx prisma migrate dev

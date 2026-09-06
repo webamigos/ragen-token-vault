@@ -30,7 +30,7 @@ Railway. Two consumers call it over HMAC-signed HTTP: `ragen-app`
 docker compose up -d      # local Postgres (published on 5435, see Local Development)
 npm run dev               # tsx watch, port 3100, reads .env.local
 npm run verify            # THE gate: generate types → lint → test → build
-npm run typecheck         # tsc --noEmit, fast inner loop
+npm run typecheck         # prisma generate + tsc --noEmit, fast inner loop
 npm run lint              # eslint src/
 npm run test              # vitest watch
 npm run test:run          # vitest single run
