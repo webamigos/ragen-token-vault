@@ -175,6 +175,7 @@ When `OTEL_EXPORTER_OTLP_ENDPOINT` is set, the service exports:
 ## Scripts
 
 ```bash
+npm run verify         # The gate: generate types + lint + test + build
 npm run dev            # Start with hot reload (tsx watch)
 npm run build          # Prisma generate + tsc
 npm run start          # Run production build
@@ -185,6 +186,18 @@ npm run generate:types # Regenerate Prisma client
 npm run db:migrate     # Deploy migrations
 npm run db:migrate:dev # Create/apply dev migrations
 ```
+
+## Documentation
+
+| Doc | What is in it |
+|---|---|
+| [`AGENTS.md`](AGENTS.md) | Guidance for coding agents — commands, the cross-service contracts, hard rules. `CLAUDE.md` imports it |
+| [`docs/architecture.md`](docs/architecture.md) | Layering, module map, route registration, the data model |
+| [`docs/service-auth.md`](docs/service-auth.md) | The HMAC contract, with a worked example — read this before writing a client |
+| [`docs/encryption.md`](docs/encryption.md) | The ciphertext envelope, what is encrypted, and what key rotation would take |
+| [`docs/google-oauth.md`](docs/google-oauth.md) | The PKCE flow, pending states, refresh |
+| [`docs/operations.md`](docs/operations.md) | Environment inventory, Railway deploy, health, observability, releases |
+| [`docs/lessons.md`](docs/lessons.md) | Non-obvious gotchas that already cost someone time here |
 
 ## Contributing
 
