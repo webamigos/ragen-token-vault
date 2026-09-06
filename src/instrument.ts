@@ -61,7 +61,7 @@ function init() {
   const logExporter = new OTLPLogExporter({ url: `${endpoint}/v1/logs` });
   loggerProvider = new LoggerProvider({
     resource,
-    processors: [new BatchLogRecordProcessor(logExporter)],
+    processors: [new BatchLogRecordProcessor({ exporter: logExporter })],
   });
   logs.setGlobalLoggerProvider(loggerProvider);
 
