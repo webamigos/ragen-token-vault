@@ -5,6 +5,11 @@ API keys for the whole Ragen platform, encrypted at rest. That makes it the most
 security-sensitive repo we have, and this guide leans on that: read the
 "Four things that catch everyone" section before you touch crypto or auth.
 
+Working with a coding agent here? [`AGENTS.md`](AGENTS.md) is the canonical
+brief — it carries the same rules as this guide plus the cross-service
+contracts, and [`docs/lessons.md`](docs/lessons.md) catalogs the gotchas that
+already cost someone an afternoon.
+
 ## Before you start
 
 - **Bugs and small fixes** — open a PR directly. No need to ask first.
@@ -26,7 +31,7 @@ Node.js 24.x (see `.nvmrc`) and Docker.
 
 ```bash
 docker compose up -d       # local Postgres
-cp .env.example .env
+cp .env.example .env.local   # npm run dev reads .env.local, not .env
 npm install
 npm run generate:types     # generate the Prisma client — required before anything builds
 npx prisma migrate dev
@@ -39,13 +44,10 @@ and nothing will compile.
 
 ## Before you open a PR
 
-Run the same gate CI runs:
+Run the same gate CI runs — one command:
 
 ```bash
-npm run generate:types     # regenerate if you touched prisma/schema.prisma
-npm run build              # prisma generate + tsc
-npm run lint
-npm run test:run
+npm run verify             # generate types → lint → test → build
 ```
 
 ## Four things that catch everyone
