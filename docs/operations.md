@@ -67,6 +67,52 @@ SIGTERM/SIGINT handler.
 Span attributes are subject to the same rule as logs: no decrypted values, no
 tokens, no `code_verifier`.
 
+## Container images
+
+Every GitHub release publishes `ghcr.io/webamigos/ragen-token-vault` from
+[`publish-images.yml`](../.github/workflows/publish-images.yml), mirroring how
+`ragen-app` publishes its apps. Railway still builds the Dockerfile itself —
+the image is for self-hosters and for `ragen-deploy`, whose
+`docker-compose.onprem.yml` already pulls
+`${REGISTRY:-ghcr.io/webamigos}/ragen-token-vault:${RAGEN_TOKEN_VAULT_VERSION:-latest}`.
+That name is a contract: renaming the package breaks that compose file.
+
+**The first publish creates the package as private.** GHCR inherits nothing
+from the repository being public, so until somebody flips it in the package
+settings (Package settings → Danger Zone → Change visibility), an anonymous
+`docker pull` gets a 404 that reads like the image was never built.
+
+```bash
+docker pull ghcr.io/webamigos/ragen-token-vault:latest
+```
+
+Tags per release: `X.Y.Z`, `X.Y`, `sha-<full-commit-sha>` and `latest`. Pin a
+deployment to the sha tag — `latest` moves, and so does `X.Y`.
+
+Three things about it are deliberate:
+
+- **The release event comes from `semantic-release`, which authenticates with
+  the `GH_TOKEN` PAT.** A release created with the default `GITHUB_TOKEN` does
+  not trigger another workflow, and nothing would ever be published. Switching
+  `release.yml` to `GITHUB_TOKEN` silently stops the images.
+- **Each architecture is built natively** — `linux/amd64` on `ubuntu-latest`,
+  `linux/arm64` on the free `ubuntu-24.04-arm` runner — pushed by digest under
+  no tag, and joined into one manifest list by the `merge` job. A per-arch
+  build that pushed a tag would race the other one and leave a
+  single-architecture image behind a tag that claims both; the final step
+  re-inspects the published manifest for exactly that reason.
+- **[`.dockerignore`](../.dockerignore) is a security control, not a build
+  optimisation.** The builder stage is `COPY . .`, and `.env.local` holds a
+  real `ENCRYPTION_KEY` and service secret. Do not remove those lines.
+
+To re-run a publish, dispatch the workflow **on the tag**, never on a branch —
+`metadata-action` reads `github.ref`, so a dispatch from `main` produces no
+semver tags at all:
+
+```bash
+gh workflow run publish-images.yml --ref v1.2.3
+```
+
 ## CI and releases
 
 [`ci.yml`](../.github/workflows/ci.yml) runs lint → test → build on pull

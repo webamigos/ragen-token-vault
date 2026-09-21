@@ -1,0 +1,186 @@
+name: Publish image
+
+# Publishes `ghcr.io/<owner>/ragen-token-vault` on every GitHub release, the
+# same way `ragen-app` publishes its apps (`.github/workflows/publish-images.yml`
+# there) — so a self-hoster, and `ragen-deploy`, can pull the vault instead of
+# building it. Railway keeps building the Dockerfile itself; this does not
+# replace that.
+#
+# The release event is what `semantic-release` produces on a push to `main`.
+# It fires because `release.yml` authenticates with the `GH_TOKEN` PAT — a
+# release created with the default `GITHUB_TOKEN` would not trigger another
+# workflow, and nothing would ever be published.
+#
+# **Every tag is a two-architecture manifest.** Each architecture is built
+# natively on its own runner (`ubuntu-24.04-arm` is a free hosted runner
+# because this repository is public), pushed by digest under no tag at all,
+# and `merge` joins the two digests into the tags. Nothing is emulated, and
+# the two jobs cannot race for a tag because neither one writes a tag.
+on:
+  release:
+    types: [published]
+  # So the workflow can be proved before a release depends on it, and re-run
+  # when a publish fails for a reason the tag has nothing to do with. Dispatch
+  # it **on the tag**, not on a branch: `metadata-action` reads `github.ref`,
+  # so a dispatch from `main` produces no semver tags at all.
+  #
+  #     gh workflow run publish-images.yml --ref v1.2.3
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    name: Build / ${{ matrix.platform.arch }}
+    runs-on: ${{ matrix.platform.runner }}
+    timeout-minutes: 30
+    strategy:
+      # One broken architecture should not hide whether the other builds.
+      fail-fast: false
+      matrix:
+        # The runner label lives next to the architecture it provides, so
+        # adding a third one is one entry rather than two edits that have to
+        # agree.
+        platform:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Required by `cache-to: type=gha`: the default `docker` driver cannot
+      # export a cache at all, and fails before building a single layer. This
+      # installs the `docker-container` driver.
+      - uses: docker/setup-buildx-action@v3
+
+      # Here only for the OCI labels. The tags are applied once, by `merge`, to
+      # the manifest list.
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/ragen-token-vault
+
+      - id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/${{ matrix.platform.arch }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Pushes under the digest and nothing else, which is what leaves
+          # `merge` something to join. `name-canonical` is what makes the
+          # digest resolvable under the repository name afterwards.
+          outputs: type=image,name=ghcr.io/${{ github.repository_owner }}/ragen-token-vault,push-by-digest=true,name-canonical=true,push=true
+          # Scoped per architecture: one shared scope would have each build
+          # evict the other's layers on every run.
+          cache-from: type=gha,scope=vault-${{ matrix.platform.arch }}
+          cache-to: type=gha,scope=vault-${{ matrix.platform.arch }},mode=max
+
+      # The digest is the only thing `merge` needs, and an artifact is the only
+      # way to hand it across jobs. The file is named after the digest so the
+      # two architectures cannot collide in one download directory, with the
+      # `sha256:` prefix stripped — `merge` puts it back, and a colon in an
+      # artifact path is its own argument against keeping it.
+      - name: Export the digest
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          mkdir -p /tmp/digests
+          touch "/tmp/digests/${DIGEST#sha256:}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ matrix.platform.arch }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  merge:
+    name: Publish
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: digests-*
+          merge-multiple: true
+          path: /tmp/digests
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/ragen-token-vault
+          # The action adds `latest` on its own for a semver tag, which with
+          # the explicit one below emits the tag twice.
+          flavor: latest=false
+          # `type=semver` reads the release tag, which `semantic-release`
+          # writes as `vX.Y.Z`. The sha tag is what a rollback pins to, since
+          # `latest` moves and the minor tag moves with it.
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,format=long
+            type=raw,value=latest,enable=${{ github.event_name == 'release' }}
+
+      # One manifest list per tag, pointing at both digests. This is the step
+      # that makes `docker pull` on an arm64 host get an arm64 image.
+      #
+      # The arguments are collected into an array rather than interpolated: a
+      # tag is untrusted enough to deserve a quote.
+      - name: Join the per-architecture digests into one tag
+        working-directory: /tmp/digests
+        env:
+          IMAGE: ghcr.io/${{ github.repository_owner }}/ragen-token-vault
+        run: |
+          args=()
+          while IFS= read -r tag; do
+            args+=(--tag "$tag")
+          done < <(jq -r '.tags[]' <<< "$DOCKER_METADATA_OUTPUT_JSON")
+          for digest in *; do
+            args+=("$IMAGE@sha256:$digest")
+          done
+          docker buildx imagetools create "${args[@]}"
+
+      # Cheap, and the only thing that would catch a manifest written with a
+      # single architecture in it — a digest artifact that failed to upload, or
+      # a `pattern` that stopped matching, is otherwise silent.
+      - name: Check both architectures are in the published manifest
+        env:
+          IMAGE: ghcr.io/${{ github.repository_owner }}/ragen-token-vault
+          VERSION: ${{ steps.meta.outputs.version }}
+        run: |
+          manifest=$(docker buildx imagetools inspect \
+            --format '{{json .Manifest}}' "$IMAGE:$VERSION")
+          for arch in amd64 arm64; do
+            if ! jq -e --arg arch "$arch" \
+              '.manifests[] | select(.platform.os == "linux" and .platform.architecture == $arch)' \
+              <<< "$manifest" > /dev/null; then
+              echo "::error::linux/$arch is missing from the published manifest"
+              exit 1
+            fi
+          done
+
+concurrency:
+  # Per tag, so two releases in quick succession do not race to move `latest`.
+  group: publish-images-${{ github.event.release.tag_name || github.ref }}
+  cancel-in-progress: false

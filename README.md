@@ -10,7 +10,7 @@ Centralized Token Vault Service for the ragen ecosystem. Stores all customer OAu
 - **Encryption**: AES-256-GCM (Node.js `crypto`)
 - **Auth**: HMAC-SHA256 service-to-service authentication
 - **Observability**: OpenTelemetry (traces, metrics, logs) + Pino logger
-- **Deployment**: Docker + Railway
+- **Deployment**: Docker + Railway (images published to `ghcr.io/webamigos/ragen-token-vault`)
 
 ## Quick Start
 

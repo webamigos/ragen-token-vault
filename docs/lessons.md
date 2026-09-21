@@ -31,6 +31,7 @@ After a nontrivial correction or a non-obvious gotcha (see `AGENTS.md`'s
 
 - [Railway's private network is IPv6-only, so a service bound to 0.0.0.0 is unreachable while looking healthy](lessons/railway-private-networking-is-ipv6-only.md) — area:deployment; module:config,docker; topic:railway,ipv6,fastify,dns. Evidence: `e4ad9fe` (PR #9).
 - [A generated client that lives outside `dist/` has to be placed in the runtime image by hand — four fix commits proved it](lessons/a-generated-client-outside-dist-must-be-placed-by-hand.md) — area:deployment,build; module:docker,db; topic:prisma,docker,tsc,file-permissions. Evidence: `4f7eb0a`, `c1641d7`, `0c76b6c`, `d0ddbb0`.
+- [A repository with no `.dockerignore` hands `.env.local` to every image build, and nothing about the build says so](lessons/a-build-context-without-dockerignore-ships-your-env-file.md) — area:deployment,security; module:docker,ci; topic:docker,build-context,secrets,ghcr. Evidence: the `.dockerignore` added alongside `publish-images.yml`; before it, `docker build .` uploaded the live `ENCRYPTION_KEY`.
 
 ### local-dev
 

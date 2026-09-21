@@ -63,6 +63,7 @@ re-discover a known gotcha. Skip this for one-line fixes.
 | Adding a route, and whether it is public or authenticated | [`docs/architecture.md`](docs/architecture.md#route-registration), "Route registration" below |
 | Schema change, migration, Prisma 7 specifics | [`docs/architecture.md`](docs/architecture.md#database), "Prisma" below |
 | Deploying, Railway, health checks, OTEL, releases | [`docs/operations.md`](docs/operations.md) |
+| Publishing the container image, GHCR tags, the build context | [`docs/operations.md`](docs/operations.md#container-images) |
 | Reviewing a change against this repo's invariants | [`.claude/skills/vault-code-review/SKILL.md`](.claude/skills/vault-code-review/SKILL.md) |
 | A local setup that "works" but talks to the wrong database | [`docs/lessons.md`](docs/lessons.md) → local-dev |
 
@@ -233,8 +234,13 @@ release. A squash-merge subject is what ends up being parsed.
 
 PRs target `main`; this repo has no `dev` branch. Railway builds the Dockerfile,
 runs `npx prisma migrate deploy` as its pre-deploy command and health-checks
-`/health`. Details and the env-var inventory in
-[`docs/operations.md`](docs/operations.md).
+`/health`. Every release also publishes
+`ghcr.io/webamigos/ragen-token-vault` (amd64 + arm64) from
+[`publish-images.yml`](.github/workflows/publish-images.yml) — which only fires
+because `release.yml` uses the `GH_TOKEN` PAT, so do not "simplify" it to
+`GITHUB_TOKEN`. **`.dockerignore` is a security control here**: the builder
+stage is `COPY . .` and `.env.local` holds a live `ENCRYPTION_KEY`. Details and
+the env-var inventory in [`docs/operations.md`](docs/operations.md).
 
 ## Post-task workflow
 

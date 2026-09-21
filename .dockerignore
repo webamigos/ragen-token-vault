@@ -1,0 +1,19 @@
+# The builder stage does `COPY . .`, so anything not listed here is uploaded as
+# build context and baked into a layer. `.env.local` holds a real
+# `ENCRYPTION_KEY` and service secret — it must never reach a published image.
+.env
+.env.local
+.env.*.local
+
+node_modules
+dist
+coverage
+src/generated
+
+.git
+.github
+.vscode
+.claude
+docs
+*.log
+.DS_Store
